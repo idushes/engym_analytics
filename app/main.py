@@ -1,10 +1,12 @@
-from apscheduler.schedulers.blocking import BlockingScheduler
-import logging, os
-from worker1 import worker1
+import os
 from dotenv import load_dotenv
+from apscheduler.schedulers.blocking import BlockingScheduler
+import logging
+from worker1 import worker1
 from helpers.pretty import bcolors
 
 load_dotenv()
+
 
 DEBUG = os.environ.get('DEBUG', '') == 'True'
 if DEBUG:
