@@ -6,6 +6,7 @@ from users import get_unique_devices, get_user_profile
 # from pprint import pprint
 # from tqdm import tqdm
 from datetime import datetime
+from helpers.dataset import Dataset
 
 
 load_dotenv()
@@ -15,15 +16,15 @@ def worker1(scheduler: BlockingScheduler):
 
 
 def prepare_dataset():
-    profiles = []
+    dataset_filename = os.environ.get('DATASET_EXPORT_FILE')
+    dataset = Dataset(filename=dataset_filename, save_chunk=1000)
     devices = get_unique_devices()
     for device_id in devices:
-        user_profile = get_user_profile(device_id)
-        profiles.append(user_profile)
-    file_path = os.environ.get('DATASET_EXPORT_FILE')
-    df = pd.DataFrame.from_dict(profiles)
-    df.to_csv(file_path)
-
+        if dataset.exist(key_name='device_id', key=device_id) is False:
+            user_profile = get_user_profile(device_id)
+            df = pd.DataFrame.from_dict([user_profile])
+            dataset.append(df)
+    dataset.save()
 
 
 def send_to_amplitude():
