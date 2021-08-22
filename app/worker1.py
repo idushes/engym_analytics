@@ -3,8 +3,8 @@ import os
 from dotenv import load_dotenv
 from apscheduler.schedulers.blocking import BlockingScheduler
 from users import get_unique_devices, get_user_profile
-from pprint import pprint
-from tqdm import tqdm
+# from pprint import pprint
+# from tqdm import tqdm
 from datetime import datetime
 
 
@@ -17,7 +17,7 @@ def worker1(scheduler: BlockingScheduler):
 def prepare_dataset():
     profiles = []
     devices = get_unique_devices()
-    for device_id in tqdm(devices, desc='prepare dataset'):
+    for device_id in devices:
         user_profile = get_user_profile(device_id)
         profiles.append(user_profile)
     file_path = os.environ.get('DATASET_EXPORT_FILE')
