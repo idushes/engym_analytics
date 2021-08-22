@@ -2,7 +2,7 @@ import pandas as pd
 import os
 from dotenv import load_dotenv
 from apscheduler.schedulers.blocking import BlockingScheduler
-from app.users import get_unique_devices, get_user_profile
+from users import get_unique_devices, get_user_profile
 from pprint import pprint
 from tqdm import tqdm
 from datetime import datetime
