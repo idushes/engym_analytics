@@ -13,11 +13,12 @@ load_dotenv()
 
 def worker1(scheduler: BlockingScheduler):
     scheduler.add_job(prepare_dataset, 'interval', days=1, next_run_time=datetime.now())
+    # spend_time_analytics()
 
 
 def prepare_dataset():
-    dataset_filename = os.environ.get('DATASET_EXPORT_FILE')
-    dataset = Dataset(filename=dataset_filename, save_chunk=1000)
+    dataset_file_path = os.environ.get('DATASET_EXPORT_PATH')
+    dataset = Dataset(path=dataset_file_path, save_chunk=1000)
     devices = get_unique_devices()
     for device_id in devices:
         if dataset.exist(key_name='device_id', key=device_id) is False:
@@ -26,6 +27,12 @@ def prepare_dataset():
             dataset.append(df)
     dataset.save()
 
+def spend_time_analytics():
+    dataset_file_path = os.environ.get('DATASET_EXPORT_PATH')
+    dataset = Dataset(path=dataset_file_path)
+    df = dataset.get_df()
+    if df is not None:
+        print(df.info)
 
 def send_to_amplitude():
     # response = send_events([])
