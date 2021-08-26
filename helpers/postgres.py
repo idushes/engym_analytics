@@ -21,3 +21,16 @@ connection = psycopg2.connect(
         )
 connection.initialize(logger)
 
+def get_table_count(table_name):
+    SQL = f'SELECT count(*) from {table_name};'
+    cur = connection.cursor()
+    cur.execute(SQL)
+    result = cur.fetchone()
+    return result[0]
+
+def get_events(table_name, chunk_size, offset):
+    SQL = f"SELECT json FROM {table_name} LIMIT {chunk_size} OFFSET {offset}"
+    cur = connection.cursor()
+    cur.execute(SQL)
+    result = cur.fetchall()
+    return result
