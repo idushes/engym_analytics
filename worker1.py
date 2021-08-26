@@ -8,7 +8,7 @@ from tqdm import tqdm
 from datetime import datetime
 from helpers.dataset import Dataset
 from helpers.postgres import get_events, get_table_count
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from helpers.amplitude import send_events
 import time
 from helpers.clickhouse import insert_events
