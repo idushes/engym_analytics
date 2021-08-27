@@ -41,7 +41,7 @@ def copy_db_from_postgres_to_clickbase():
     while offset < total:
         events = get_events(postgres_table_name, chunk_size=chunk_size, offset=offset)
         events = [event[0] for event in events]
-        insert_events(events, table_name=clickhouse_table_name)
+        insert_events(events, table_name=clickhouse_table_name, exception_data=f"postgres_table_name: {postgres_table_name} offset: {offset} chunk_size: {chunk_size}")
         offset += chunk_size
 
 def prepare_dataset():

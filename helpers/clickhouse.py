@@ -3,15 +3,11 @@ from dotenv import load_dotenv
 import os
 from pandas import json_normalize
 import json
+import logging
 
 load_dotenv()
+logger = logging.getLogger("clickhouse")
 
-client = Client(
-    host = os.environ.get('CH_HOST'),
-    user = os.environ.get('CH_USER'),
-    password = os.environ.get('CH_PASSWORD'),
-    database = os.environ.get('CH_DATABASE')
-)
 
 __SQL_CREATE_TABLE__ = """create table IF NOT EXISTS engym.kids2appevent
 (
@@ -36,7 +32,6 @@ __SQL_CREATE_TABLE__ = """create table IF NOT EXISTS engym.kids2appevent
     `ip` Nullable(IPv4),
     `insert_id` Nullable(String),
     `session_id` Nullable(Float32),
-    `backup_json` Nullable(String),
     `location_lat` Nullable(Float32),
     `location_lng` Nullable(Float32),
     `revenueType` Nullable(String),
@@ -49,11 +44,30 @@ __SQL_CREATE_TABLE__ = """create table IF NOT EXISTS engym.kids2appevent
         ORDER BY (device_id, time);
 """
 
-client.execute(__SQL_CREATE_TABLE__)
 
+
+def sql_execute(SQL, exception_data=""):
+    client = Client(
+        host=os.environ.get('CH_HOST'),
+        user=os.environ.get('CH_USER'),
+        password=os.environ.get('CH_PASSWORD'),
+        database=os.environ.get('CH_DATABASE')
+    )
+    data = None
+    try:
+        data = client.execute(SQL)
+    except Exception as e:
+        message = "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
+        if exception_data != "":
+            message += exception_data
+            logger.error(message + str(e))
+        else:
+            logger.error(message + str(e))
+    client.disconnect()
+    return data
 
 def check_new_columns(events, table_name):
-    CREATE_SQL = client.execute(f"SHOW CREATE {table_name}")[0][0]
+    CREATE_SQL = sql_execute(f"SHOW CREATE {table_name}")[0][0]
     unique_keys = []
     for event in events:
         for key in event.keys():
@@ -75,16 +89,10 @@ def check_new_columns(events, table_name):
                 elif isinstance(event[key], list):
                     ADD_COLUMN_SQL = f"alter table {table_name}\n add column {key} Array(String);\n"
                     print(f"`{key}` Array(String),", event[key], type(event[key]))
-                else:
-                    # print(f"`{key}` Array(String),", event[key], type(event[key]))
-                    # print(f"NEW TYPY !!!!! ({key} -> {event[key]})", type(event[key]),)
-                    pass
                 if ADD_COLUMN_SQL is not None:
-                    # print(ADD_COLUMN_SQL)
-                    # print(event[key])
-                    client.execute(ADD_COLUMN_SQL)
+                    sql_execute(ADD_COLUMN_SQL, exception_data=ADD_COLUMN_SQL)
 
-def insert_events(events, table_name="kids2appevent"):
+def insert_events(events, table_name="kids2appevent", exception_data=""):
     if len(events) == 0: return
     df = json_normalize(events, sep="_")
     df = df.fillna('None')
@@ -102,4 +110,4 @@ def insert_events(events, table_name="kids2appevent"):
         json_object = json.dumps(event)
         SQL += f"{json_object}\n"
     SQL += ";"
-    client.execute(SQL)
+    sql_execute(SQL, exception_data=exception_data)
