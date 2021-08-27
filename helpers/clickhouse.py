@@ -4,6 +4,8 @@ import os
 from pandas import json_normalize
 import json
 import logging
+import copy
+
 
 load_dotenv()
 logger = logging.getLogger("clickhouse")
@@ -64,7 +66,7 @@ def sql_execute(SQL, exception_data=""):
         else:
             logger.error(message + str(e))
     client.disconnect()
-    return data
+    return copy.deepcopy(data)
 
 def check_new_columns(events, table_name):
     CREATE_SQL = sql_execute(f"SHOW CREATE {table_name}")[0][0]
