@@ -7,11 +7,11 @@ from pprint import pprint
 from tqdm import tqdm
 from datetime import datetime
 from helpers.dataset import Dataset
-from helpers.postgres import get_events, get_table_count
+import helpers.postgres as postgres
 # import matplotlib.pyplot as plt
 from helpers.amplitude import send_events
 import time
-from helpers.clickhouse import insert_events, check_new_columns
+import helpers.clickhouse as clickhouse
 
 def current_milli_time():
     return round(time.time() * 1000)
@@ -29,20 +29,18 @@ def worker1(scheduler: BlockingScheduler):
 def copy_db_from_postgres_to_clickbase():
     postgres_table_name = "kids2appevent_new"
     clickhouse_table_name = "kids2appevent"
-    chunk_size = 10000
-    total = get_table_count(postgres_table_name)
+    columns = postgres.get_json_columns(table=postgres_table_name)
+    clickhouse.prepare_table(columns, table_name=clickhouse_table_name)
+    chunk_size = 1
+    total = postgres.get_table_count(postgres_table_name)
     offset = 1
+    # pbar = tqdm(total=total, desc="to_clickbase")
     while offset < total:
-        events = get_events(postgres_table_name, chunk_size=chunk_size, offset=offset)
-        events = [event[0] for event in events]
-        check_new_columns(events, table_name=clickhouse_table_name)
+        events = postgres.get_events(postgres_table_name, chunk_size=chunk_size, offset=offset)
+        clickhouse.insert_events(events, table_name=clickhouse_table_name, exception_data=f"postgres_table_name: {postgres_table_name} offset: {offset} chunk_size: {chunk_size}")
         offset += chunk_size
-    offset = 1
-    while offset < total:
-        events = get_events(postgres_table_name, chunk_size=chunk_size, offset=offset)
-        events = [event[0] for event in events]
-        insert_events(events, table_name=clickhouse_table_name, exception_data=f"postgres_table_name: {postgres_table_name} offset: {offset} chunk_size: {chunk_size}")
-        offset += chunk_size
+        # pbar.update(chunk_size)
+    # pbar.close()
 
 def prepare_dataset():
     dataset_file_path = os.environ.get('DATASET_EXPORT_PATH')

@@ -3,6 +3,8 @@ from psycopg2.extras import LoggingConnection
 import os
 import psycopg2
 from dotenv import load_dotenv
+from tqdm import tqdm
+from pandas import json_normalize
 
 load_dotenv()
 
@@ -33,4 +35,39 @@ def get_events(table_name, chunk_size, offset):
     cur = connection.cursor()
     cur.execute(SQL)
     result = cur.fetchall()
-    return result
+    events = [event[0] for event in result]
+    df = json_normalize(events, sep="_")
+    df = df.fillna('None')
+    dict_array = df.to_dict(orient='records')
+    # TODO: Костыли !!!!
+    for event in dict_array:
+        for key, value in event.items():
+            if event[key] == 'None': event[key] = None
+            if type(event[key]) == bool: event[key] = int(event[key])
+    return dict_array
+
+def get_json_columns(table="kids2appevent_new"):
+    chunk_size = 10000
+    total = get_table_count(table)
+    offset = 1
+    columns = {}
+    pbar = tqdm(total=total, desc="get_json_columns")
+    while offset < total:
+        events = get_events(table, chunk_size=chunk_size, offset=offset)
+        for event in events:
+            for key in event.keys():
+                if key not in columns.keys():
+                    if type(event[key]) == str and event[key] != "" and event[key] != "None":
+                        columns[key] = "Nullable(String)"
+                    elif type(event[key]) == int:
+                        columns[key] = "Nullable(Float32)"
+                    elif type(event[key]) == bool:
+                        columns[key] = "Nullable(Float32)"
+                    elif type(event[key]) == float:
+                        columns[key] = "Nullable(Float32)"
+                    elif isinstance(event[key], list):
+                        columns[key] = "Array(String)"
+        offset += chunk_size
+        pbar.update(chunk_size)
+    pbar.close()
+    return columns
