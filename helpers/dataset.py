@@ -35,7 +35,7 @@ class Dataset:
             file_path = self.get_file_path(self.FileExtension.PICKLE)
             # df.to_sql(self.get_file_path(self.FileExtension.SQL))
             df.to_pickle(file_path)
-            df.to_csv(self.get_file_path(self.FileExtension.CSV), )
+            df.to_csv(self.get_file_path(self.FileExtension.CSV), index=False)
             print(f"{datetime.now()}: df shape {self.__df__.shape} --> {file_path}")
 
     def exist(self, key, key_name):

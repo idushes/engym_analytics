@@ -21,7 +21,7 @@ load_dotenv()
 DEBUG = os.environ.get("DEBUG")
 
 def worker1(scheduler: BlockingScheduler):
-    if os.environ.get("PRODACTION") == "True":
+    if os.environ.get("PRODUCTION") == "True":
         scheduler.add_job(copy_db_from_postgres_to_clickbase, 'interval', days=1, next_run_time=datetime.now())
     # scheduler.add_job(prepare_dataset, 'interval', days=1, next_run_time=datetime.now())
     # spend_time_analytics()
