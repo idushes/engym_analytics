@@ -16,7 +16,10 @@ USER=os.environ.get('CH_USER')
 PASSWORD=os.environ.get('CH_PASSWORD')
 DATABASE=os.environ.get('CH_DATABASE')
 
+_connection = None
+
 def get_connection():
+    # if _connection is not None and _connection.is
     return connect(host=HOST, user=USER, password=PASSWORD, database=DATABASE, connect_timeout=10)
 
 def prepare_table(columns, table_name="kids2appevent"):
@@ -116,4 +119,5 @@ def insert_events(events, table_name="kids2appevent", exception_data=""):
     with get_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute(SQL)
+            conn.close()
     # sql_execute(SQL, exception_data=exception_data)

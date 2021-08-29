@@ -31,7 +31,7 @@ def get_table_count(table_name):
     return result[0]
 
 def get_events(table_name, chunk_size, offset):
-    SQL = f"SELECT json FROM {table_name} ORDER BY id LIMIT {chunk_size} OFFSET {offset}"
+    SQL = f"SELECT json FROM {table_name} WHERE clickhouse is NULL ORDER BY id LIMIT {chunk_size} OFFSET {offset}"
     cur = connection.cursor()
     cur.execute(SQL)
     result = cur.fetchall()
@@ -50,7 +50,7 @@ def mark_events(table_name, chunk_size, offset):
     SQL = f"""UPDATE {table_name}
     SET clickhouse = now()
     WHERE ID IN (
-      SELECT id from kids2appevent_new ORDER BY id LIMIT {chunk_size} OFFSET {offset}
+      SELECT id from kids2appevent_new WHERE clickhouse is NULL ORDER BY id LIMIT {chunk_size} OFFSET {offset}
     );"""
     cur = connection.cursor()
     cur.execute(SQL)

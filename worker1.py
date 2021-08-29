@@ -35,18 +35,19 @@ def copy_db_from_postgres_to_clickbase():
     # columns = postgres.get_json_columns(table=postgres_table_name)
     # clickhouse.prepare_table(columns, table_name=clickhouse_table_name)
     chunk_size = 1000
-    total = postgres.get_table_count(postgres_table_name)
+    # total = postgres.get_table_count(postgres_table_name)
     offset = 0
-    pbar = tqdm(total=total, desc="to_clickbase")
-    while offset < total:
+    pbar = tqdm(desc="to_clickbase")
+    while True:
         try:
             events = postgres.get_events(postgres_table_name, chunk_size=chunk_size, offset=offset)
             clickhouse.insert_events(events, table_name=clickhouse_table_name, exception_data=f"postgres_table_name: {postgres_table_name} offset: {offset} chunk_size: {chunk_size}")
             postgres.mark_events(table_name=postgres_table_name, chunk_size=chunk_size, offset=offset)
+            pbar.update(chunk_size)
+            if len(events) < chunk_size: break
         except ValueError as err:
             print(err)
-        offset += chunk_size
-        pbar.update(chunk_size)
+            offset += chunk_size
     pbar.close()
 
 def prepare_dataset():
