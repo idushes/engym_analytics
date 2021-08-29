@@ -31,7 +31,7 @@ def get_table_count(table_name):
     return result[0]
 
 def get_events(table_name, chunk_size, offset):
-    SQL = f"SELECT json FROM {table_name} LIMIT {chunk_size} OFFSET {offset}"
+    SQL = f"SELECT json FROM {table_name} ORDER BY id LIMIT {chunk_size} OFFSET {offset}"
     cur = connection.cursor()
     cur.execute(SQL)
     result = cur.fetchall()
@@ -45,6 +45,16 @@ def get_events(table_name, chunk_size, offset):
             if event[key] == 'None': event[key] = None
             if type(event[key]) == bool: event[key] = int(event[key])
     return dict_array
+
+def mark_events(table_name, chunk_size, offset):
+    SQL = f"""UPDATE {table_name}
+    SET clickhouse = now()
+    WHERE ID IN (
+      SELECT id from kids2appevent_new ORDER BY id LIMIT {chunk_size} OFFSET {offset}
+    );"""
+    cur = connection.cursor()
+    cur.execute(SQL)
+    connection.commit()
 
 def get_json_columns(table="kids2appevent_new"):
     chunk_size = 10000

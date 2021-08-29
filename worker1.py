@@ -18,9 +18,12 @@ def current_milli_time():
 
 load_dotenv()
 
+DEBUG = os.environ.get("DEBUG")
+
 def worker1(scheduler: BlockingScheduler):
+    if DEBUG is False:
+        scheduler.add_job(copy_db_from_postgres_to_clickbase, 'interval', days=1, next_run_time=datetime.now())
     # scheduler.add_job(prepare_dataset, 'interval', days=1, next_run_time=datetime.now())
-    scheduler.add_job(copy_db_from_postgres_to_clickbase, 'interval', days=1, next_run_time=datetime.now())
     # spend_time_analytics()
     # send_to_amplitude()
     # insert_events([])
@@ -31,16 +34,20 @@ def copy_db_from_postgres_to_clickbase():
     clickhouse_table_name = "kids2appevent"
     columns = postgres.get_json_columns(table=postgres_table_name)
     clickhouse.prepare_table(columns, table_name=clickhouse_table_name)
-    chunk_size = 1
+    chunk_size = 1000
     total = postgres.get_table_count(postgres_table_name)
-    offset = 1
-    # pbar = tqdm(total=total, desc="to_clickbase")
+    offset = 0
+    pbar = tqdm(total=total, desc="to_clickbase")
     while offset < total:
-        events = postgres.get_events(postgres_table_name, chunk_size=chunk_size, offset=offset)
-        clickhouse.insert_events(events, table_name=clickhouse_table_name, exception_data=f"postgres_table_name: {postgres_table_name} offset: {offset} chunk_size: {chunk_size}")
+        try:
+            events = postgres.get_events(postgres_table_name, chunk_size=chunk_size, offset=offset)
+            clickhouse.insert_events(events, table_name=clickhouse_table_name, exception_data=f"postgres_table_name: {postgres_table_name} offset: {offset} chunk_size: {chunk_size}")
+            postgres.mark_events(table_name=postgres_table_name, chunk_size=chunk_size, offset=offset)
+        except ValueError as err:
+            print(err)
         offset += chunk_size
-        # pbar.update(chunk_size)
-    # pbar.close()
+        pbar.update(chunk_size)
+    pbar.close()
 
 def prepare_dataset():
     dataset_file_path = os.environ.get('DATASET_EXPORT_PATH')

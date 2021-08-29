@@ -41,9 +41,9 @@ def prepare_table(columns, table_name="kids2appevent"):
                 `insert_id` Nullable(String),
                 `session_id` Nullable(Float32)
             )
-                engine = MergeTree()
+                engine = ReplacingMergeTree()
                     PARTITION BY toYYYYMM(time)
-                    ORDER BY (device_id, time);
+                    ORDER BY (device_id, time, event_type);
             """
             cursor.execute(SQL_CREATE_TABLE)
             cursor.execute(f"SHOW CREATE {table_name}")
