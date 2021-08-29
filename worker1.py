@@ -32,8 +32,8 @@ def worker1(scheduler: BlockingScheduler):
 def copy_db_from_postgres_to_clickbase():
     postgres_table_name = "kids2appevent_new"
     clickhouse_table_name = "kids2appevent"
-    columns = postgres.get_json_columns(table=postgres_table_name)
-    clickhouse.prepare_table(columns, table_name=clickhouse_table_name)
+    # columns = postgres.get_json_columns(table=postgres_table_name)
+    # clickhouse.prepare_table(columns, table_name=clickhouse_table_name)
     chunk_size = 1000
     total = postgres.get_table_count(postgres_table_name)
     offset = 0
